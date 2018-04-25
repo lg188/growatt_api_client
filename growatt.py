@@ -1,14 +1,5 @@
 # -*- coding: utf-8 -*-
 
-# Compatible for use with Python 3 only! 
-# For Synology devices, download Python 3 using the package manager,
-# Then install pip using: wget https://bootstrap.pypa.io/get-pip.py & sudo python3 get-pip.py
-# Create symlink to pip using: ln -s /volume1/@appstore/py3k/usr/local/bin/pip /usr/bin
-# By default, the requests module is missing, so install it using pip: sudo pip install requests
-# Then call script using 'python3 growatt.py'. 
-# You can also schedule the script using the Task Scheduler in Synology.
-# Have fun!
-
 from enum import IntEnum
 import datetime
 import hashlib
