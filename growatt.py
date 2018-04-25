@@ -1,10 +1,22 @@
+# -*- coding: utf-8 -*-
+
+# Compatible for use with Python 3 only! 
+# For Synology devices, download Python 3 using the package manager,
+# Then install pip using: wget https://bootstrap.pypa.io/get-pip.py & sudo python3 get-pip.py
+# Create symlink to pip using: ln -s /volume1/@appstore/py3k/usr/local/bin/pip /usr/bin
+# By default, the requests module is missing, so install it using pip: sudo pip install requests
+# Then call script using 'python3 growatt.py'. 
+# You can also schedule the script using the Task Scheduler in Synology.
+# Have fun!
+
 from enum import IntEnum
 import datetime
 import hashlib
 import json
 import requests
+#from pprint import pprint
 
-
+# Function to create hash for your password to login with
 def hash_password(password):
     """
     Normal MD5, except add c if a byte of the digest is less than 10.
@@ -14,7 +26,6 @@ def hash_password(password):
         if password_md5[i] == '0':
             password_md5 = password_md5[0:i] + 'c' + password_md5[i + 1:]
     return password_md5
-
 
 class Timespan(IntEnum):
     day = 1
@@ -64,18 +75,49 @@ class GrowattApi:
         return data['back']
 
 
+# Set username and password here
 if __name__ == "__main__":
-    username = ...
-    password = ...
+    username = 'YourUsername'
+    password = 'YourPassword'
 
-    assert hash_password("banaan") == "31d674be46e1ba6b54388a671cc9accb"
-
+ 
     api = GrowattApi()
     login_res = api.login(username, password)
     user_id = login_res['userId']
+    # Get basic plant info
     plant_info = api.plant_list(user_id)
-    print(plant_info)
+    #pprint(plant_info)
 
+    # Get detailed plant info
     plant_id = plant_info['data'][0]['plantId']
     plant_detail = api.plant_detail(plant_id, Timespan.day, datetime.date.today())
-    print(plant_detail)
+    #pprint(plant_detail)
+
+    
+# Prepare data for Telegram
+    basic_data = plant_info['data']
+    for lijst_basic in basic_data[:1]:
+        todayEnergy = lijst_basic['todayEnergy']
+        totalEnergy = lijst_basic['totalEnergy']
+    
+    basic_data2 = plant_info['totalData']
+    totalMoney = basic_data2['eTotalMoneyText']
+    CO2 = basic_data2['CO2Sum']
+        
+    detail_data = plant_detail['plantData']
+    todayMoney = detail_data['plantMoneyText']
+    
+# Send data to Telegram
+apikey = 'botXXXXXX:XXXXXXXX'
+chatid = 'XXXXXXXX'
+r = requests.post('https://api.telegram.org/'
+                  '{}/'
+                  'sendMessage?chat_id={}&'
+                  'parse_mode=markdown&'
+                  'text=☀ *Dagelijks Overzicht Zonnepanelen* ☀ \n'
+                  'Vandaag opgewekt:        {} 🔌\n'
+                  'Vandaag bespaard:         {} 💰\n'
+                  '*=============================* \n'
+                  'Totaal opgewekt:             {} 🔌\n'
+                  'Totaal bespaard:              {} 💰\n'
+                  'Totale CO2 besparing:    {} 🌱\n'.format(apikey, chatid, todayEnergy, todayMoney, totalEnergy, totalMoney, CO2))
