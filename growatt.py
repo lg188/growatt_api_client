@@ -1,11 +1,14 @@
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 from enum import IntEnum
+from pprint import pprint
+from sys import exit
 import datetime
 import hashlib
 import json
+import netrc
 import requests
-#from pprint import pprint
 
 # Function to create hash for your password to login with
 def hash_password(password):
@@ -24,7 +27,7 @@ class Timespan(IntEnum):
 
 
 class GrowattApi:
-    server_url = 'http://server.growatt.com/'
+    server_url = 'https://server.growatt.com/'
 
     def __init__(self):
         self.session = requests.Session()
@@ -68,47 +71,31 @@ class GrowattApi:
 
 # Set username and password here
 if __name__ == "__main__":
-    username = 'YourUsername'
-    password = 'YourPassword'
-
+    try:
+        MyNetrc = netrc.netrc()
+        credentials = MyNetrc.authenticators("growat.com")
+        if credentials:
+            username = credentials[0] 
+            password = credentials[2] 
+        else:
+            print("No netrc entry")
+            exit(-1)
+    except netrc.NetrcParseError:
+        print("Unable to parse netrc")
+        exit(-1)
  
     api = GrowattApi()
     login_res = api.login(username, password)
+    if login_res['success'] == False:
+        print("Login failed.")
+        exit(-1)
     user_id = login_res['userId']
     # Get basic plant info
     plant_info = api.plant_list(user_id)
-    #pprint(plant_info)
 
     # Get detailed plant info
     plant_id = plant_info['data'][0]['plantId']
     plant_detail = api.plant_detail(plant_id, Timespan.day, datetime.date.today())
-    #pprint(plant_detail)
-
+    currentEnergy = plant_detail['plantData']['currentEnergy']
+    print(currentEnergy)
     
-# Prepare data for Telegram
-    basic_data = plant_info['data']
-    for lijst_basic in basic_data[:1]:
-        todayEnergy = lijst_basic['todayEnergy']
-        totalEnergy = lijst_basic['totalEnergy']
-    
-    basic_data2 = plant_info['totalData']
-    totalMoney = basic_data2['eTotalMoneyText']
-    CO2 = basic_data2['CO2Sum']
-        
-    detail_data = plant_detail['plantData']
-    todayMoney = detail_data['plantMoneyText']
-    
-# Send data to Telegram
-apikey = 'botXXXXXX:XXXXXXXX'
-chatid = 'XXXXXXXX'
-r = requests.post('https://api.telegram.org/'
-                  '{}/'
-                  'sendMessage?chat_id={}&'
-                  'parse_mode=markdown&'
-                  'text=☀ *Dagelijks Overzicht Zonnepanelen* ☀ \n'
-                  'Vandaag opgewekt:        {} 🔌\n'
-                  'Vandaag bespaard:         {} 💰\n'
-                  '*=============================* \n'
-                  'Totaal opgewekt:             {} 🔌\n'
-                  'Totaal bespaard:              {} 💰\n'
-                  'Totale CO2 besparing:    {} 🌱\n'.format(apikey, chatid, todayEnergy, todayMoney, totalEnergy, totalMoney, CO2))
