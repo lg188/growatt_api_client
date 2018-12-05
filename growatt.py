@@ -24,6 +24,7 @@ def hash_password(password):
 class Timespan(IntEnum):
     day = 1
     month = 2
+    year = 3
 
 
 class GrowattApi:
@@ -59,6 +60,8 @@ class GrowattApi:
             date_str = date.strftime('%Y-%m-%d')
         elif timespan == Timespan.month:
             date_str = date.strftime('%Y-%m')
+        elif timespan == Timespan.year:
+            date_str = date.strftime('%Y')
 
         response = self.session.get(self.get_url('PlantDetailAPI.do'), params={
             'plantId': plant_id,
@@ -66,8 +69,8 @@ class GrowattApi:
             'date': date_str
         })
         data = json.loads(response.content.decode('utf-8'))
+        pprint(data)
         return data['back']
-
 
 # Set username and password here
 if __name__ == "__main__":
@@ -95,7 +98,7 @@ if __name__ == "__main__":
 
     # Get detailed plant info
     plant_id = plant_info['data'][0]['plantId']
-    plant_detail = api.plant_detail(plant_id, Timespan.day, datetime.date.today())
+    plant_detail = api.plant_detail(plant_id, Timespan.day, datetime.datetime.now())
     currentEnergy = plant_detail['plantData']['currentEnergy']
     print(currentEnergy)
     
