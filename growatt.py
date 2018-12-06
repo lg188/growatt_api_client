@@ -5,7 +5,6 @@ A client for the Growatt API
 
 from enum import IntEnum
 import sys
-import datetime
 import hashlib
 import json
 import netrc as Netrc
@@ -123,14 +122,5 @@ if __name__ == "__main__":
 
     # Get basic plant info
     PLANT_INFO = API.plant_list(USER_ID)
-
-    # Get detailed plant info
-    PLANT_ID = PLANT_INFO['data'][0]['plantId']
-    PLANT_DETAIL = API.plant_detail(
-        PLANT_ID, Timespan.day, datetime.datetime.now())
-    if not PLANT_DETAIL['success']:
-        if PLANT_DETAIL['errCode'] == '201':
-            raise RuntimeError("The date string is invalied.")
-        raise RuntimeError("The request returned invalid data.")
-    CURRENT_ENERGY = PLANT_DETAIL['plantData']['currentEnergy']
-    print(CURRENT_ENERGY)
+    for plant in PLANT_INFO['data']:
+        print(f"{plant['plantName']}: {plant['currentPower']}")
