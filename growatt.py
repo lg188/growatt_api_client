@@ -123,4 +123,4 @@ if __name__ == "__main__":
     # Get basic plant info
     PLANT_INFO = API.plant_list(USER_ID)
     for plant in PLANT_INFO['data']:
-        print(f"{plant['plantName']}: {plant['currentPower']}")
+        print(f"{plant['plantName']}:{int(Time.time()*1000)}:{plant['currentPower']}")
