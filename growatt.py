@@ -9,6 +9,7 @@ import hashlib
 import json
 import netrc as Netrc
 import time as Time
+import string
 import requests
 
 
@@ -122,5 +123,11 @@ if __name__ == "__main__":
 
     # Get basic plant info
     PLANT_INFO = API.plant_list(USER_ID)
+    TIMESTAMP = int(Time.time() * 1000)
     for plant in PLANT_INFO['data']:
-        print(f"{plant['plantName']}:{int(Time.time()*1000)}:{plant['currentPower']}")
+        # this assumes the number will always be in Watt, and that it can be discarded
+        # NOT THOROUGHLY TESTED
+        current_power = float(
+            plant['currentPower'].strip(string.ascii_letters))
+        if current_power > 0:
+            print(f"{TIMESTAMP}:{plant['plantId']}:{current_power}")
